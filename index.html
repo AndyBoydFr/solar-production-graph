@@ -24,6 +24,16 @@
             return date.toISOString().split('T')[0];
         }
 
+        async function fetchThingSpeakData(apiKey, channelId, fieldId, startDate, endDate) {
+            const url = `https://api.thingspeak.com/channels/${channelId}/fields/${fieldId}.json?api_key=${apiKey}&start=${startDate}&end=${endDate}&results=1000`;
+            const response = await fetch(url);
+            const data = await response.json();
+            return data.feeds.map(feed => ({
+                date: feed.created_at,
+                value: parseFloat(feed[`field${fieldId}`])
+            }));
+        }
+
         async function updateChart(date) {
             const startDate = formatDate(date);
             const endDate = formatDate(new Date(date.getTime() + 24 * 60 * 60 * 1000));
