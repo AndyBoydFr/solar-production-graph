@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ThingSpeak Solar Production Graph</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <div>
+        <button id="prevDay">Previous Day</button>
+        <span id="dateDisplay"></span>
+        <button id="nextDay">Next Day</button>
+    </div>
+    <canvas id="solarProductionChart"></canvas>
+    <script>
+        const apiKey = 'YOUR_API_KEY';
+        const channelId = 'YOUR_CHANNEL_ID';
+        const fieldId = 1; // Change to your field ID for solar production
+
+        let currentDate = new Date();
+        
+        function formatDate(date) {
+            return date.toISOString().split('T')[0];
+        }
+
+        async function updateChart(date) {
+            const startDate = formatDate(date);
+            const endDate = formatDate(new Date(date.getTime() + 24 * 60 * 60 * 1000));
+            const data = await fetchThingSpeakData(apiKey, channelId, fieldId, startDate, endDate);
+            
+            const labels = data.map(d => new Date(d.date).toLocaleTimeString());
+            const values = data.map(d => d.value);
+
+            const ctx = document.getElementById('solarProductionChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Solar Production (kWh)',
+                        data: values,
+                        borderColor: 'rgba(75, 192, 192, 1)',
+                        borderWidth: 1,
+                        fill: false
+                    }]
+                },
+                options: {
+                    scales: {
+                        x: {
+                            type: 'time',
+                            time: {
+                                unit: 'hour'
+                            }
+                        },
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+
+            document.getElementById('dateDisplay').innerText = startDate;
+        }
+
+        document.getElementById('prevDay').addEventListener('click', () => {
+            currentDate.setDate(currentDate.getDate() - 1);
+            updateChart(currentDate);
+        });
+
+        document.getElementById('nextDay').addEventListener('click', () => {
+            currentDate.setDate(currentDate.getDate() + 1);
+            updateChart(currentDate);
+        });
+
+        updateChart(currentDate);
+    </script>
+</body>
+</html>
